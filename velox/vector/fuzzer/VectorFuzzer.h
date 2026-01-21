@@ -73,7 +73,6 @@ const std::vector<TypePtr>& defaultScalarTypes();
 ///      fuzzer.fuzzArray(
 ///          fuzzer.fuzzConstant(DOUBLE(), 40), 100),
 ///      10);
-///
 class VectorFuzzer {
  public:
   struct Options {
@@ -183,7 +182,15 @@ class VectorFuzzer {
       const VectorFuzzer::Options& options,
       memory::MemoryPool* pool,
       size_t seed = 123456)
-      : opts_(options), pool_(pool), rng_(seed) {}
+      : opts_(options),
+        pool_(pool),
+        rng_([&]() {
+          const char* envSeed = std::getenv("OVERRIDE_VECTORFUZZER_SEED");
+          if (envSeed) {
+            return static_cast<size_t>(std::atoi(envSeed));
+          }
+          return seed;
+        }()) {}
 #if defined(__GNUC__) && \
     ((__GNUC__ > 12) || (__GNUC__ == 12 && __GNUC_MINOR__ >= 4))
   VELOX_UNSUPPRESS_STRINGOP_OVERFLOW_WARNING
